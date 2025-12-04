@@ -159,9 +159,6 @@ $signup_success = '';
     </script>
 
 <?php
-$signup_error = '';
-$signup_success = '';
-
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = isset($_POST['first_name']) ? trim($_POST['first_name']) : '';
@@ -208,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert_stmt->bind_param("sssssss", $first_name, $last_name, $supervisor_id, $email, $username, $department, $hashed_password);
             
             if ($insert_stmt->execute()) {
-                $signup_success = 'Account created successfully! You can now <a href="login.php" class="text-sac-blue font-semibold hover:underline">login here</a>.';
+                $signup_success = 'Account created successfully!';
             } else {
                 $signup_error = 'An error occurred while creating your account. Please try again.';
             }
@@ -217,6 +214,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
+<!-- SweetAlert2 success popup -->
+<?php if (!empty($signup_success)): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: 'Registration Successful',
+                html: 'Your supervisor account has been created successfully.',
+                confirmButtonText: 'Proceed to Login',
+                confirmButtonColor: '#0A3D62'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'login.php';
+                }
+            });
+        });
+    </script>
+<?php endif; ?>
 
 <!-- Sign Up Form Section -->
 <main class="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4">

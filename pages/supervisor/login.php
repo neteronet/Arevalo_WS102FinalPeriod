@@ -1,5 +1,5 @@
 <?php
-include '../../includes/login_process.php';
+include '../../includes/supervisor_login_process.php';
 include '../../includes/connection.php';
 ?>
 
@@ -19,7 +19,7 @@ include '../../includes/connection.php';
 
     <!-- External CSS Stylesheet -->
     <link rel="stylesheet" href="../css/styles.css">
-
+    
     <!-- Configure Tailwind Theme Colors -->
     <script>
         tailwind.config = {
