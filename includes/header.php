@@ -1,3 +1,10 @@
+<?php
+// Shared public header (used by browse/search and others)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -45,8 +52,24 @@
                     <div class="hidden md:flex items-center space-x-4 lg:space-x-8">
                         <a href="../index.php" class="text-white hover:text-sac-gold transition duration-300 text-sm lg:text-base whitespace-nowrap">Home</a>
                         <a href="../pages/search.php" class="text-white hover:text-sac-gold transition duration-300 text-sm lg:text-base whitespace-nowrap">Browse</a>
-                        <a href="../pages/role-selection.php" class="px-3 sm:px-4 py-2 bg-sac-gold text-sac-blue font-bold rounded hover:bg-yellow-400 transition text-sm lg:text-base whitespace-nowrap">Login</a>                    </div>
-                    
+
+                        <?php if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true): ?>
+                            <!-- Logged-in state: show Dashboard link + username with icon and logout -->
+                            <a href="../pages/student/dashboard.php" class="text-white hover:text-sac-gold transition duration-300 text-sm lg:text-base whitespace-nowrap">Dashboard</a>
+                            <div class="flex items-center space-x-3">
+                                <a href="../pages/student/dashboard.php" class="flex items-center text-white hover:text-sac-gold transition duration-300 text-sm lg:text-base whitespace-nowrap">
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sac-gold text-sac-blue font-bold mr-2">
+                                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                                    </span>
+                                    <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                                </a>
+                                <a href="../pages/student/logout.php" class="px-3 sm:px-4 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-700 transition text-sm lg:text-base whitespace-nowrap">Logout</a>
+                            </div>
+                        <?php else: ?>
+                            <!-- Logged-out state: show Login button -->
+                            <a href="../pages/role-selection.php" class="px-3 sm:px-4 py-2 bg-sac-gold text-sac-blue font-bold rounded hover:bg-yellow-400 transition text-sm lg:text-base whitespace-nowrap">Login</a>
+                        <?php endif; ?>
+                    </div>
 
                     <!-- Mobile Hamburger Menu - Right Side -->
                     <div class="md:hidden ml-auto">
@@ -63,7 +86,15 @@
                     <div class="bg-sac-blue border-t border-blue-500 md:hidden px-2 sm:px-4 py-2 sm:py-3">
                         <a href="../index.php" class="block text-white hover:text-sac-gold hover:bg-blue-700 transition duration-300 px-3 sm:px-4 py-3 text-sm sm:text-base border-b border-blue-500 active:bg-blue-700 rounded mb-1">Home</a>
                         <a href="../pages/search.php" class="block text-white hover:text-sac-gold hover:bg-blue-700 transition duration-300 px-3 sm:px-4 py-3 text-sm sm:text-base border-b border-blue-500 active:bg-blue-700 rounded mb-3 sm:mb-4">Browse</a>
-                        <a href="../pages/role-selection.php" class="block text-white bg-sac-gold text-sac-blue font-bold rounded hover:bg-yellow-400 transition duration-300 px-4 py-2.5 text-sm sm:text-base text-center w-full">Login</a>
+
+                        <?php if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true): ?>
+                            <a href="../pages/student/dashboard.php" class="block text-white hover:text-sac-gold hover:bg-blue-700 transition duration-300 px-3 sm:px-4 py-3 text-sm sm:text-base border-b border-blue-500 active:bg-blue-700 rounded mb-1">
+                                Dashboard (<?php echo htmlspecialchars($_SESSION['username']); ?>)
+                            </a>
+                            <a href="../pages/student/logout.php" class="block text-white bg-red-600 font-bold rounded hover:bg-red-700 transition duration-300 px-4 py-2.5 text-sm sm:text-base text-center w-full">Logout</a>
+                        <?php else: ?>
+                            <a href="../pages/role-selection.php" class="block text-white bg-sac-gold text-sac-blue font-bold rounded hover:bg-yellow-400 transition duration-300 px-4 py-2.5 text-sm sm:text-base text-center w-full">Login</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

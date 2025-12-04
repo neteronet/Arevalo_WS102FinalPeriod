@@ -160,8 +160,5 @@ if (isset($_SESSION['user_role'])) {
             <p class="text-gray-400 text-sm mt-2">Preserving Institutional Excellence.</p>
         </div>
     </footer>
-
-
 </body>
-
 </html>
