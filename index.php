@@ -21,9 +21,9 @@ if (isset($conn)) {
 
     // 2. Fetch Latest 5 Submissions based on category
     if ($selected_category === 'all') {
-        $sql_latest = "SELECT id, title, authors, year, department, abstract, category FROM capstones WHERE status='approved' ORDER BY date_submitted DESC LIMIT 5";
+        $sql_latest = "SELECT id, title, authors, year, department, abstract, category, adviser, keywords, updated_at FROM capstones WHERE status='approved' ORDER BY date_submitted DESC LIMIT 5";
     } else {
-        $sql_latest = "SELECT id, title, authors, year, department, abstract, category FROM capstones WHERE status='approved' AND category = ? ORDER BY date_submitted DESC LIMIT 5";
+        $sql_latest = "SELECT id, title, authors, year, department, abstract, category, adviser, keywords, updated_at FROM capstones WHERE status='approved' AND category = ? ORDER BY date_submitted DESC LIMIT 5";
     }
     
     if ($selected_category === 'all') {
@@ -300,46 +300,53 @@ if (isset($conn)) {
             </div>
         </section>
 
-        <!-- Latest Submissions -->
+        <!-- Approved Submissions -->
         <section>
             <div class="flex items-center justify-between mb-8 border-b-2 border-gray-200 pb-2">
-                <h2 class="text-2xl font-bold text-sac-blue">Latest Submissions</h2>
-                <a href="search.php" class="text-sac-blue hover:text-sac-gold font-semibold">View All &rarr;</a>
+                <h2 class="text-2xl font-bold text-sac-blue">Approved Submissions</h2>
+                <a href="pages/search.php" class="text-sac-blue hover:text-sac-gold font-semibold">View All &rarr;</a>
             </div>
 
             <div class="space-y-4">
                 <?php if (count($latest_docs) > 0): ?>
                     <?php foreach ($latest_docs as $doc): ?>
-                        <div class="bg-white p-6 rounded-lg shadow border border-gray-100 hover:border-sac-gold transition duration-300">
-                            <div class="flex flex-col md:flex-row justify-between md:items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-2 flex-wrap">
-                                        <?php if (!empty($doc['category'])): ?>
-                                            <span class="inline-block bg-sac-blue text-sac-gold text-xs px-3 py-1 rounded-full font-semibold">
-                                                <?php echo htmlspecialchars($doc['category']); ?>
-                                            </span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($doc['department'])): ?>
-                                            <span class="inline-block bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full font-semibold">
-                                                <?php echo htmlspecialchars($doc['department']); ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <h4 class="text-xl font-bold text-sac-blue hover:underline">
-                                        <a href="pages/search.php"><?php echo htmlspecialchars($doc['title']); ?></a>
-                                    </h4>
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        <span class="font-semibold">Authors:</span> <?php echo htmlspecialchars($doc['authors']); ?> &bull;
-                                        <span class="font-semibold">Year:</span> <?php echo htmlspecialchars($doc['year']); ?>
-                                    </p>
-                                    <p class="text-gray-600 mt-2 line-clamp-2"><?php echo htmlspecialchars($doc['abstract']); ?></p>
-                                </div>
+                        <div class="bg-white p-5 rounded border border-gray-200 hover:border-sac-blue hover:shadow-md transition duration-200">
+                            <!-- Title -->
+                            <h3 class="text-lg font-semibold text-sac-blue mb-2 hover:underline">
+                                <a href="pages/view-details.php?id=<?php echo $doc['id']; ?>"><?php echo htmlspecialchars($doc['title']); ?></a>
+                            </h3>
+
+                            <!-- Metadata -->
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+                                <?php if (!empty($doc['authors'])): ?>
+                                    <span><strong>Authors:</strong> <?php echo htmlspecialchars($doc['authors']); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($doc['year'])): ?>
+                                    <span>&bull; <strong>Year:</strong> <?php echo htmlspecialchars($doc['year']); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($doc['category'])): ?>
+                                    <span>&bull; <span class="text-sac-blue font-medium"><?php echo htmlspecialchars($doc['category']); ?></span></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Abstract Preview -->
+                            <?php if (!empty($doc['abstract'])): ?>
+                                <p class="text-gray-700 text-sm mb-3 line-clamp-2">
+                                    <?php echo htmlspecialchars($doc['abstract']); ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <!-- View Link -->
+                            <div class="pt-2 border-t border-gray-100">
+                                <a href="pages/view-details.php?id=<?php echo $doc['id']; ?>" class="text-sac-blue text-sm font-medium hover:text-sac-gold transition">
+                                    View Details &rarr;
+                                </a>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="text-center py-10 bg-gray-100 rounded text-gray-500">
-                        No documents currently available in the repository.
+                    <div class="text-center py-12 bg-gray-50 rounded border border-gray-200">
+                        <p class="text-gray-500">No documents currently available in the repository.</p>
                     </div>
                 <?php endif; ?>
             </div>

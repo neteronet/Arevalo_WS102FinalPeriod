@@ -37,7 +37,7 @@ $signup_success = '';
         }
     </script>
 
-    <!-- Internal CSS for Custom Overrides -->
+    <!-- Internal CSS for Custom Overrides (match student mobile nav) -->
     <style>
         /* Custom Scrollbar for a "Cyber" feel */
         ::-webkit-scrollbar {

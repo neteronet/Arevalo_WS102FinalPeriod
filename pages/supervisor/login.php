@@ -34,6 +34,47 @@ include '../../includes/connection.php';
             }
         }
     </script>
+
+    <!-- Internal CSS for mobile hamburger (match student pages) -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .mobile-menu {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .mobile-menu.active {
+            display: block;
+            max-height: 500px;
+        }
+
+        .hamburger-menu {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .hamburger-menu span {
+            display: block;
+            width: 22px;
+            height: 2.5px;
+            background-color: white;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+            transform-origin: center;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">

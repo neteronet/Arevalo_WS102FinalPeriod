@@ -33,6 +33,71 @@ if (session_status() === PHP_SESSION_NONE) {
             }
         }
     </script>
+
+    <!-- Internal CSS for Custom Overrides (match student pages for mobile hamburger) -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .mobile-menu.active {
+            display: block;
+            max-height: 500px;
+        }
+
+        .hamburger-menu {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 8px;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .hamburger-menu span {
+            display: block;
+            width: 22px;
+            height: 2.5px;
+            background-color: white;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+            transform-origin: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-draft {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
@@ -43,7 +108,7 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="flex justify-between items-center h-14 sm:h-16 md:h-16">
                     <div class="flex items-center min-w-0 flex-1">
                         <span class="text-sac-gold text-base sm:text-lg md:text-2xl font-bold tracking-wide truncate">
-                            SAC Cyberian - Supervisor
+                            SAC Cyberian 
                         </span>
                     </div>
 

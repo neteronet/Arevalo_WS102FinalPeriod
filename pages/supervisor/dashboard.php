@@ -78,42 +78,13 @@ if ($stmt_stats !== false) {
 <!-- Main Content -->
 <main class="flex-grow max-w-7xl mx-auto w-full px-4 py-12">
     <!-- Welcome Section -->
-    <div class="mb-8">
+    <div class="mb-10">
         <h1 class="text-4xl font-bold text-sac-blue mb-2">
             Welcome, <?php echo htmlspecialchars($supervisor['first_name'] . ' ' . $supervisor['last_name']); ?>
         </h1>
         <p class="text-gray-600 text-lg">
             Review and manage student research and capstone submissions.
         </p>
-        <p class="text-sm text-gray-500 mt-1">
-            Supervisor ID: <span class="font-semibold"><?php echo htmlspecialchars($supervisor['supervisor_id'] ?? ''); ?></span>
-            &middot;
-            Department: <span class="font-semibold"><?php echo htmlspecialchars($supervisor['department'] ?? ''); ?></span>
-        </p>
-    </div>
-
-    <!-- System Overview Card -->
-    <div class="mb-10 bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col md:flex-row gap-4">
-        <div class="flex-shrink-0 hidden md:flex items-center justify-center w-14 h-14 rounded-full bg-sac-blue/10">
-            <svg class="w-8 h-8 text-sac-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 7v10a2 2 0 002 2h4m10-12v6m0 4v-4m0 0l-3-3m3 3l3-3M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2m-2 0H9m0 0H5a2 2 0 00-2 2v0" />
-            </svg>
-        </div>
-        <div>
-            <h2 class="text-xl font-semibold text-sac-blue mb-1">
-                SAC Cyberian Centralized Repository System
-            </h2>
-            <p class="text-gray-700 text-sm leading-relaxed">
-                A centralized digital repository designed to store, organize, and manage research and capstone project
-                documents of St. Anthony's College BSIT students, promoting accessibility, transparency, and
-                long-term preservation of academic works.
-            </p>
-            <p class="text-gray-500 text-xs mt-2">
-                As a supervisor, you play a key role in maintaining the quality and integrity of the repository by
-                reviewing, approving, or rejecting student submissions.
-            </p>
-        </div>
     </div>
 
     <!-- Statistics Cards -->
@@ -140,7 +111,7 @@ if ($stmt_stats !== false) {
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="p-6 border-b border-gray-200 flex items-center justify-between">
             <h2 class="text-2xl font-bold text-sac-blue">All Student Submissions</h2>
-            <span class="text-sm text-gray-500">Most recent first</span>
+            <span class="text-sm text-gray-500">Click "Review" to approve or reject a submission.</span>
         </div>
 
         <?php if ($result_caps->num_rows > 0): ?>
@@ -154,6 +125,7 @@ if ($stmt_stats !== false) {
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Department</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Updated</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,6 +165,12 @@ if ($stmt_stats !== false) {
                                     $date = new DateTime($cap['updated_at']);
                                     echo $date->format('m/d/Y');
                                     ?>
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <a href="review_submission.php?id=<?php echo $cap['id']; ?>"
+                                       class="inline-flex items-center px-3 py-1.5 rounded-md bg-sac-blue text-white text-xs font-semibold hover:bg-blue-800 transition">
+                                        Review
+                                    </a>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
