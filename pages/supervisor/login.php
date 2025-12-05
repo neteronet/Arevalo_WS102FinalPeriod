@@ -193,7 +193,7 @@ include '../../includes/connection.php';
                         <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
                     </div>
                     <div class="text-sm">
-                        <a href="#" class="text-sac-blue hover:text-sac-gold font-medium">Forgot password?</a>
+                        <a href="forgot-password.php" class="text-sac-blue hover:text-sac-gold font-medium">Forgot password?</a>
                     </div>
                 </div>
 

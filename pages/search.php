@@ -6,7 +6,10 @@ $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
 $selected_category = isset($_GET['category']) ? $_GET['category'] : 'all';
 $search_field = isset($_GET['field']) ? $_GET['field'] : 'all';
 $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
+$page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$items_per_page = 5;
 $results = [];
+$total_results = 0;
 
 if (isset($conn)) {
     // Base query: only approved capstones
@@ -75,7 +78,28 @@ if (isset($conn)) {
     ];
     
     $order_by = isset($sort_options[$sort_by]) ? $sort_options[$sort_by] : $sort_options['newest'];
-    $sql .= " ORDER BY " . $order_by;
+    
+    // Get total count first
+    $count_sql = "SELECT COUNT(*) as total FROM (" . $sql . ") as count_query";
+    $count_stmt = $conn->prepare($count_sql);
+    if ($count_stmt) {
+        if (!empty($params)) {
+            $count_stmt->bind_param($types, ...$params);
+        }
+        $count_stmt->execute();
+        $count_result = $count_stmt->get_result();
+        if ($count_row = $count_result->fetch_assoc()) {
+            $total_results = $count_row['total'];
+        }
+        $count_stmt->close();
+    }
+    
+    // Add pagination
+    $offset = ($page - 1) * $items_per_page;
+    $sql .= " ORDER BY " . $order_by . " LIMIT ? OFFSET ?";
+    $params[] = $items_per_page;
+    $params[] = $offset;
+    $types .= 'ii';
 
     // Prepare and execute
     $stmt = $conn->prepare($sql);
@@ -174,32 +198,32 @@ if (isset($conn)) {
                         <span class="font-semibold text-sac-blue text-xs uppercase tracking-wide">Information Technology</span>
                     </li>
                     <li class="mt-1">
-                        <a href="?category=Software%20Development<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=Software%20Development<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             Software Development
                         </a>
                     </li>
                     <li>
-                        <a href="?category=Artificial%20Intelligence<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=Artificial%20Intelligence<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             Artificial Intelligence
                         </a>
                     </li>
                     <li>
-                        <a href="?category=Networking%20%26%20Security<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=Networking%20%26%20Security<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             Networking &amp; Security
                         </a>
                     </li>
                     <li>
-                        <a href="?category=IoT%20%26%20Hardware<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=IoT%20%26%20Hardware<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             IoT &amp; Hardware
                         </a>
                     </li>
                     <li>
-                        <a href="?category=Game%20Development<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=Game%20Development<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             Game Development
                         </a>
                     </li>
                     <li>
-                        <a href="?category=Management%20Information%20Systems<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>" class="block py-1 hover:text-sac-gold">
+                        <a href="?category=Management%20Information%20Systems<?php echo !empty($search_query) ? '&q=' . urlencode($search_query) . '&field=' . urlencode($search_field) : ''; ?>&sort=<?php echo urlencode($sort_by); ?>&page=1" class="block py-1 hover:text-sac-gold">
                             Management Information Systems
                         </a>
                     </li>
@@ -211,7 +235,8 @@ if (isset($conn)) {
         <section class="md:col-span-3">
             <div class="space-y-6">
                 <?php
-                $total = count($results);
+                $total = $total_results;
+                $total_pages = ceil($total / $items_per_page);
                 ?>
 
                 <!-- Sort and Results Count -->
@@ -253,6 +278,7 @@ if (isset($conn)) {
                         <?php if ($selected_category !== 'all'): ?>
                             <input type="hidden" name="category" value="<?php echo htmlspecialchars($selected_category); ?>">
                         <?php endif; ?>
+                        <input type="hidden" name="page" value="1">
                     </form>
                 </div>
 
@@ -275,6 +301,83 @@ if (isset($conn)) {
                             </div>
                         </div>
                     <?php endforeach; ?>
+                    
+                    <!-- Pagination -->
+                    <?php if ($total_pages > 1): ?>
+                        <div class="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-gray-200">
+                            <?php
+                            // Build query string for pagination links
+                            $query_params = [];
+                            if (!empty($search_query)) $query_params['q'] = $search_query;
+                            if ($search_field !== 'all') $query_params['field'] = $search_field;
+                            if ($selected_category !== 'all') $query_params['category'] = $selected_category;
+                            if ($sort_by !== 'newest') $query_params['sort'] = $sort_by;
+                            $query_string = !empty($query_params) ? '&' . http_build_query($query_params) : '';
+                            ?>
+                            
+                            <!-- Previous Button -->
+                            <?php if ($page > 1): ?>
+                                <a href="?page=<?php echo $page - 1; ?><?php echo $query_string; ?>" 
+                                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                    &larr; Previous
+                                </a>
+                            <?php else: ?>
+                                <span class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                                    &larr; Previous
+                                </span>
+                            <?php endif; ?>
+                            
+                            <!-- Page Numbers -->
+                            <div class="flex items-center gap-1">
+                                <?php
+                                $start_page = max(1, $page - 2);
+                                $end_page = min($total_pages, $page + 2);
+                                
+                                if ($start_page > 1): ?>
+                                    <a href="?page=1<?php echo $query_string; ?>" 
+                                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">1</a>
+                                    <?php if ($start_page > 2): ?>
+                                        <span class="px-2 text-gray-500">...</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+                                    <?php if ($i == $page): ?>
+                                        <span class="px-3 py-2 bg-sac-blue text-white rounded-lg text-sm font-medium">
+                                            <?php echo $i; ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <a href="?page=<?php echo $i; ?><?php echo $query_string; ?>" 
+                                           class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                            <?php echo $i; ?>
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+                                
+                                <?php if ($end_page < $total_pages): ?>
+                                    <?php if ($end_page < $total_pages - 1): ?>
+                                        <span class="px-2 text-gray-500">...</span>
+                                    <?php endif; ?>
+                                    <a href="?page=<?php echo $total_pages; ?><?php echo $query_string; ?>" 
+                                       class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                        <?php echo $total_pages; ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <!-- Next Button -->
+                            <?php if ($page < $total_pages): ?>
+                                <a href="?page=<?php echo $page + 1; ?><?php echo $query_string; ?>" 
+                                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                    Next &rarr;
+                                </a>
+                            <?php else: ?>
+                                <span class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                                    Next &rarr;
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div class="text-center py-12 bg-gray-100 rounded border border-dashed border-gray-300">
                         <p class="text-gray-500 text-lg">No documents found matching your criteria.</p>
