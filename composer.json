@@ -1,0 +1,14 @@
+{
+    "name": "sac-cyberian/repository",
+    "description": "SAC Cyberian Repository System",
+    "type": "project",
+    "authors": [
+        {
+            "name": "SAC Cyberian",
+            "email": "neteronet@gmail.com"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^7.0"
+    }
+}

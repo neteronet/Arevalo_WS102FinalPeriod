@@ -4,6 +4,7 @@ include '../../includes/connection.php';
 
 $error = '';
 $success = '';
+$redirect_url = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = isset($_POST['email']) ? trim($_POST['email']) : '';
@@ -57,13 +58,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         // Try to use PHPMailer if available
                         $email_sent = false;
+                        $email_error = '';
+                        
                         if (file_exists('../../includes/phpmailer_config.php')) {
                             require_once '../../includes/phpmailer_config.php';
-                            $email_sent = sendOTPEmail($email, $user_name, $otp);
+                            
+                            // Check if PHPMailer is available and function exists
+                            if (function_exists('sendOTPEmail')) {
+                                // Send OTP email to the email address provided in the form
+                                error_log("Supervisor Forgot Password: Attempting to send OTP to: " . $email);
+                                $email_sent = sendOTPEmail($email, $user_name, $otp);
+                                
+                                if (!$email_sent) {
+                                    $email_error = "Failed to send email via PHPMailer. Check error logs.";
+                                    error_log("Supervisor Forgot Password: Email sending failed for: " . $email);
+                                }
+                            } else {
+                                error_log("Supervisor Forgot Password: sendOTPEmail function not found");
+                            }
+                        } else {
+                            error_log("Supervisor Forgot Password: phpmailer_config.php not found");
                         }
                         
-                        // Fallback to PHP mail() if PHPMailer fails
+                        // Fallback to PHP mail() if PHPMailer fails or is not available
                         if (!$email_sent) {
+                            error_log("Supervisor Forgot Password: Attempting fallback mail() function for: " . $email);
                             $subject = 'Password Reset OTP - SAC Cyberian Repository';
                             $message = "Hello " . $user_name . ",\n\n";
                             $message .= "You have requested to reset your password. Your OTP is: " . $otp . "\n\n";
@@ -75,15 +94,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
                             
                             $email_sent = @mail($email, $subject, $message, $headers);
+                            
+                            if ($email_sent) {
+                                error_log("Supervisor Forgot Password: Fallback mail() succeeded for: " . $email);
+                            } else {
+                                error_log("Supervisor Forgot Password: Fallback mail() also failed for: " . $email);
+                            }
                         }
                         
+                        // Store session data and redirect to verify OTP page
+                        $_SESSION['reset_token'] = $token;
+                        $_SESSION['reset_email'] = $email;
+                        $_SESSION['otp_code'] = $otp; // Store OTP for confirmation
+                        
                         if ($email_sent) {
-                            $_SESSION['reset_token'] = $token;
-                            $_SESSION['reset_email'] = $email;
-                            header("Location: reset-password.php?token=" . urlencode($token));
-                            exit;
+                            // OTP sent successfully - redirect to confirmation page first
+                            $_SESSION['email_sent_success'] = true;
+                            $redirect_url = "otp-sent-confirmation.php?email=" . urlencode($email);
                         } else {
-                            $error = 'Failed to send email. Please contact support.';
+                            // Email failed - show OTP on screen for testing
+                            $_SESSION['otp_display'] = $otp;
+                            $_SESSION['email_sent'] = false;
+                            $_SESSION['email_sent_success'] = false;
+                            $redirect_url = "verify-otp.php?sent=0&email=" . urlencode($email);
                         }
                     } else {
                         $error = 'Failed to create reset token. Please try again.';
@@ -99,6 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->close();
         }
     }
+}
+
+// Redirect if needed (before any HTML output)
+if (!empty($redirect_url)) {
+    header("Location: " . $redirect_url);
+    exit;
 }
 ?>
 

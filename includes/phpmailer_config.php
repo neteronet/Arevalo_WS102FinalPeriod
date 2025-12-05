@@ -12,15 +12,15 @@
 // Check if PHPMailer is available
 $phpmailer_available = false;
 
-// Try to load PHPMailer
-if (file_exists(__DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php')) {
+// Try to load PHPMailer via Composer autoloader
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+    $phpmailer_available = true;
+} elseif (file_exists(__DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php')) {
+    // Fallback: direct file includes (if not using Composer)
     require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
     require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
     require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
-    
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception;
-    
     $phpmailer_available = true;
 }
 
@@ -31,12 +31,29 @@ function getPHPMailer() {
     global $phpmailer_available;
     
     if (!$phpmailer_available) {
+        error_log("PHPMailer not available - autoloader or files not found");
         return false;
     }
     
-    $mail = new PHPMailer(true);
-    
     try {
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        
+        // Enable verbose debug output (set to 0 for production, 2 for debugging)
+        // Set to 2 temporarily to debug email sending issues
+        $mail->SMTPDebug = 0; // 0 = off, 2 = client and server messages
+        $mail->Debugoutput = function($str, $level) {
+            error_log("PHPMailer Debug: $str");
+        };
+        
+        // Additional SMTP options for Gmail
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
+        
         // Server settings
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
@@ -45,7 +62,15 @@ function getPHPMailer() {
         $mail->Password   = 'your_app_password_here'; // Gmail App Password (not regular password)
         // IMPORTANT: Replace 'your_app_password_here' with your actual Gmail App Password
         // Get it from: https://myaccount.google.com/apppasswords
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        // Remove spaces when copying (e.g., "abcd efgh ijkl mnop" → "abcdefghijklmnop")
+        
+        // Check if password is still default - but don't fail, allow fallback
+        if ($mail->Password === 'your_app_password_here' || empty($mail->Password)) {
+            error_log("PHPMailer: Gmail App Password not configured! Email will use fallback method.");
+            // Return mail object anyway to allow fallback email sending
+        }
+        
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->CharSet    = 'UTF-8';
         
@@ -53,25 +78,55 @@ function getPHPMailer() {
         $mail->setFrom('neteronet@gmail.com', 'SAC Cyberian Repository');
         
         return $mail;
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        error_log("PHPMailer configuration error: " . $e->getMessage());
+        return false;
     } catch (Exception $e) {
-        error_log("PHPMailer configuration error: " . $mail->ErrorInfo);
+        error_log("PHPMailer general error: " . $e->getMessage());
         return false;
     }
 }
 
 /**
- * Send OTP email
+ * Send OTP email to the specified email address
+ * 
+ * @param string $to_email The recipient's email address (from forgot password form)
+ * @param string $to_name The recipient's name
+ * @param string $otp The 6-digit OTP code
+ * @return bool True if email sent successfully, false otherwise
  */
 function sendOTPEmail($to_email, $to_name, $otp) {
+    // Validate email address
+    if (empty($to_email) || !filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
+        error_log("sendOTPEmail: Invalid email address provided: " . $to_email);
+        return false;
+    }
+    
+    // Log attempt to send email
+    error_log("sendOTPEmail: Attempting to send OTP to: " . $to_email . " (Name: " . $to_name . ")");
+    
     $mail = getPHPMailer();
     
     if (!$mail) {
+        error_log("sendOTPEmail: Failed to get PHPMailer instance. Check configuration.");
         return false;
     }
     
     try {
-        // Recipient
+        // Clear any previous recipients
+        $mail->clearAddresses();
+        $mail->clearReplyTos();
+        
+        // Add recipient - this is the email from the forgot password form
         $mail->addAddress($to_email, $to_name);
+        
+        // Add reply-to address
+        $mail->addReplyTo('neteronet@gmail.com', 'SAC Cyberian Repository');
+        
+        // Log recipient address for debugging
+        error_log("sendOTPEmail: Sending OTP email to recipient: " . $to_email);
+        error_log("sendOTPEmail: From: neteronet@gmail.com");
+        error_log("sendOTPEmail: OTP Code: " . $otp);
         
         // Content
         $mail->isHTML(true);
@@ -110,10 +165,25 @@ function sendOTPEmail($to_email, $to_name, $otp) {
         
         $mail->AltBody = "Hello " . $to_name . ",\n\nYou have requested to reset your password. Your OTP is: " . $otp . "\n\nThis OTP will expire in 15 minutes.\n\nIf you did not request this, please ignore this email.";
         
-        $mail->send();
-        return true;
+        // Send email
+        $result = $mail->send();
+        
+        if ($result) {
+            error_log("sendOTPEmail: SUCCESS - OTP email sent successfully to: " . $to_email);
+            return true;
+        } else {
+            error_log("sendOTPEmail: FAILED - Mail->send() returned false for: " . $to_email);
+            error_log("sendOTPEmail: Error Info: " . $mail->ErrorInfo);
+            return false;
+        }
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        $error_msg = "PHPMailer Exception sending to " . $to_email . ": " . $mail->ErrorInfo;
+        error_log($error_msg);
+        error_log("PHPMailer Exception Details: " . $e->getMessage());
+        return false;
     } catch (Exception $e) {
-        error_log("Email sending failed: " . $mail->ErrorInfo);
+        $error_msg = "General error sending email to " . $to_email . ": " . $e->getMessage();
+        error_log($error_msg);
         return false;
     }
 }
